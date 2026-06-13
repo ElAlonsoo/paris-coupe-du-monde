@@ -11,12 +11,12 @@ header{text-align:center;padding:30px 15px;background:radial-gradient(circle at 
 h1{color:#ffd700;margin:10px 0;font-size:38px;text-shadow:0 0 20px #ffd700}
 .container{max-width:1150px;margin:auto;padding:18px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
-.card,.box{background:rgba(255,255,255,.09);border:1px solid rgba(255,215,0,.45);border-radius:18px;padding:16px;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.card,.box{background:rgba(255,255,255,.09);border:1px solid rgba(255,215,0,.45);border-radius:18px;padding:16px;text-align:center}
 .card b{display:block;color:#ffd700;font-size:24px;margin-top:6px}
 .good{color:#23e36f!important}.bad{color:#ff4d4d!important}
 input,select,button{width:100%;padding:13px;margin:6px 0;border:none;border-radius:12px;font-size:16px}
 button{background:#ffd700;color:#061a40;font-weight:bold;cursor:pointer}
-button:disabled{opacity:.4}
+button:disabled{opacity:.45}
 table{width:100%;border-collapse:collapse;background:white;color:#111;border-radius:16px;overflow:hidden}
 th{background:#ffd700;padding:11px}
 td{padding:11px;text-align:center;border-bottom:1px solid #ddd}
@@ -28,9 +28,8 @@ td{padding:11px;text-align:center;border-bottom:1px solid #ddd}
 .bar-inner{height:100%;width:0%;background:#23e36f;color:#061a40;font-weight:bold;line-height:24px}
 .blackjack{background:linear-gradient(135deg,#064420,#0b7a3b);border:3px solid #ffd700}
 .hand{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:15px}
-.playing-card{width:78px;height:110px;background:white;color:#111;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;border:3px solid #111;animation:deal .35s ease}
+.playing-card{width:78px;height:110px;background:white;color:#111;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;border:3px solid #111}
 .card-back{background:linear-gradient(135deg,#111,#333);color:#ffd700;font-size:13px;text-align:center}
-@keyframes deal{from{transform:translateY(-80px) rotate(-8deg);opacity:0}to{transform:translateY(0);opacity:1}}
 .footer{text-align:center;opacity:.8;padding:22px}
 </style>
 </head>
@@ -39,7 +38,7 @@ td{padding:11px;text-align:center;border-bottom:1px solid #ddd}
 <header>
   <div style="font-size:55px">🏆 ⚽ 🇫🇷 🐐 🃏</div>
   <h1>PARIS DE GASPARD LE GOAT</h1>
-  <p>Pronostics + Blackjack virtuel BlackGasp</p>
+  <p>Pronogasp + BlackGasp virtuel</p>
 </header>
 
 <div class="container">
@@ -84,10 +83,17 @@ td{padding:11px;text-align:center;border-bottom:1px solid #ddd}
 
 <h2 style="text-align:center;color:#ffd700;margin-top:35px">🃏 BLACKGASP BLACKJACK</h2>
 
-<div class="box blackjack">
-  <h2>Balance virtuelle : <span id="bjBalance">1000</span> €</h2>
-  <input id="bjBet" type="number" placeholder="Mise Blackjack">
+<div class="stats">
+  <div class="card">💰 Balance BJ<b id="bjBalance">5000 €</b></div>
+  <div class="card">🔥 Wins BJ<b id="bjWins">0</b></div>
+  <div class="card">💀 Loss BJ<b id="bjLosses">0</b></div>
+  <div class="card">🤝 Push<b id="bjPushes">0</b></div>
+  <div class="card">📈 Profit BJ<b id="bjProfit">0 €</b></div>
+  <div class="card">🐐 Rang<b id="bjRank">Bronze</b></div>
+</div>
 
+<div class="box blackjack">
+  <input id="bjBet" type="number" placeholder="Mise Blackjack">
   <button onclick="startBlackjack()">🎲 Nouvelle partie</button>
 
   <h3>Croupier : <span id="dealerScore"></span></h3>
@@ -99,10 +105,10 @@ td{padding:11px;text-align:center;border-bottom:1px solid #ddd}
   <button id="hitBtn" onclick="hit()">➕ Tirer</button>
   <button id="standBtn" onclick="stand()">✋ Rester</button>
   <button id="doubleBtn" onclick="doubleDown()">💥 Double</button>
-  <button id="splitBtn" onclick="splitHand()">✂️ Diviser</button>
 
   <h2 id="bjMessage">Mise et lance une partie</h2>
-  <p>Jeu virtuel uniquement. Cartes BlackGasp, pas d’argent réel.</p>
+  <p>Argent 100% virtuel. Blackjack naturel payé x2.5 pour rendre le mode plus fun.</p>
+  <button onclick="resetBJ()">🔄 Reset Blackjack</button>
 </div>
 
 </div>
@@ -111,11 +117,13 @@ td{padding:11px;text-align:center;border-bottom:1px solid #ddd}
 
 <script>
 let paris=JSON.parse(localStorage.getItem("paris"))||[];
-function euro(n){return n.toFixed(2)+" €"}
+function euro(n){return Number(n).toFixed(2)+" €"}
 
 function ajouterPari(){
- let date=document.getElementById("date").value,match=document.getElementById("match").value;
- let mise=Number(document.getElementById("mise").value),cote=Number(document.getElementById("cote").value);
+ let date=document.getElementById("date").value;
+ let match=document.getElementById("match").value;
+ let mise=Number(document.getElementById("mise").value);
+ let cote=Number(document.getElementById("cote").value);
  let resultat=document.getElementById("resultat").value;
  if(!date||!match||!mise||!cote){alert("Remplis toutes les cases");return}
  let gain=resultat==="Gagné"?mise*(cote-1):-mise;
@@ -123,19 +131,33 @@ function ajouterPari(){
  localStorage.setItem("paris",JSON.stringify(paris));
  afficher();
 }
-function supprimerPari(i){if(confirm("Supprimer ce pari ?")){paris.splice(i,1);localStorage.setItem("paris",JSON.stringify(paris));afficher()}}
+
+function supprimerPari(i){
+ if(confirm("Supprimer ce pari ?")){
+  paris.splice(i,1);
+  localStorage.setItem("paris",JSON.stringify(paris));
+  afficher();
+ }
+}
+
 function afficher(){
  let table=document.getElementById("table");table.innerHTML="";
  let profit=0,totalMise=0,wins=0,losses=0,gains=[];
  paris.forEach((p,i)=>{
-  profit+=p.gain;totalMise+=p.mise;gains.push(p.gain);p.resultat==="Gagné"?wins++:losses++;
-  table.innerHTML+=`<tr class="${p.gain>=0?'win':'lose'}"><td>${p.date}</td><td>${p.match}</td><td>${euro(p.mise)}</td><td>${p.cote}</td><td><span class="badge ${p.resultat==='Gagné'?'badge-win':'badge-lose'}">${p.resultat}</span></td><td><b>${euro(p.gain)}</b></td><td><span class="delete" onclick="supprimerPari(${i})">X</span></td></tr>`;
+  profit+=p.gain;totalMise+=p.mise;gains.push(p.gain);
+  p.resultat==="Gagné"?wins++:losses++;
+  table.innerHTML+=`<tr class="${p.gain>=0?'win':'lose'}">
+  <td>${p.date}</td><td>${p.match}</td><td>${euro(p.mise)}</td><td>${p.cote}</td>
+  <td><span class="badge ${p.resultat==='Gagné'?'badge-win':'badge-lose'}">${p.resultat}</span></td>
+  <td><b>${euro(p.gain)}</b></td>
+  <td><span class="delete" onclick="supprimerPari(${i})">X</span></td></tr>`;
  });
  let total=wins+losses,success=total?(wins/total)*100:0,roi=totalMise?(profit/totalMise)*100:0;
  document.getElementById("profit").innerText=euro(profit);
  document.getElementById("profit").className=profit>=0?"good":"bad";
  document.getElementById("totalMise").innerText=euro(totalMise);
- document.getElementById("wins").innerText=wins;document.getElementById("losses").innerText=losses;
+ document.getElementById("wins").innerText=wins;
+ document.getElementById("losses").innerText=losses;
  document.getElementById("roi").innerText=roi.toFixed(1)+"%";
  document.getElementById("roi").className=roi>=0?"good":"bad";
  document.getElementById("success").innerText=success.toFixed(1)+"%";
@@ -146,22 +168,50 @@ function afficher(){
  document.getElementById("winRateBar").innerText=success.toFixed(1)+"%";
 }
 
-let balance=Number(localStorage.getItem("bjBalance"))||1000;
-let deck=[],player=[],dealer=[],currentBet=0,playing=false,canDouble=false,canSplit=false;
+let bj=JSON.parse(localStorage.getItem("blackgasp"))||{balance:5000,start:5000,wins:0,losses:0,pushes:0};
+let deck=[],player=[],dealer=[],currentBet=0,playing=false,canDouble=false;
 
-function saveBalance(){localStorage.setItem("bjBalance",balance);document.getElementById("bjBalance").innerText=balance.toFixed(2)}
+function saveBJ(){
+ localStorage.setItem("blackgasp",JSON.stringify(bj));
+ document.getElementById("bjBalance").innerText=euro(bj.balance);
+ document.getElementById("bjWins").innerText=bj.wins;
+ document.getElementById("bjLosses").innerText=bj.losses;
+ document.getElementById("bjPushes").innerText=bj.pushes;
+ let profit=bj.balance-bj.start;
+ document.getElementById("bjProfit").innerText=euro(profit);
+ document.getElementById("bjProfit").className=profit>=0?"good":"bad";
+ let rank="Bronze";
+ if(bj.balance>=7000)rank="Argent";
+ if(bj.balance>=10000)rank="Or";
+ if(bj.balance>=15000)rank="Diamant";
+ if(bj.balance>=25000)rank="GOAT";
+ document.getElementById("bjRank").innerText=rank;
+}
+
 function newDeck(){
  let suits=["♠","♥","♦","♣"],vals=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];deck=[];
- for(let s of suits){for(let v of vals){deck.push({v,s})}}
+ for(let d=0;d<6;d++){for(let s of suits){for(let v of vals){deck.push({v,s})}}}
  deck.sort(()=>Math.random()-0.5);
 }
+
 function value(hand){
  let sum=0,aces=0;
- hand.forEach(c=>{if(c.v==="A"){sum+=11;aces++}else if(["J","Q","K"].includes(c.v))sum+=10;else sum+=Number(c.v)});
+ hand.forEach(c=>{
+  if(c.v==="A"){sum+=11;aces++}
+  else if(["J","Q","K"].includes(c.v))sum+=10;
+  else sum+=Number(c.v);
+ });
  while(sum>21&&aces>0){sum-=10;aces--}
  return sum;
 }
-function cardHTML(c,hide=false){return hide?`<div class="playing-card card-back">BlackGasp</div>`:`<div class="playing-card">${c.v}${c.s}</div>`}
+
+function isBJ(hand){return hand.length===2&&value(hand)===21}
+
+function cardHTML(c,hide=false){
+ if(hide)return `<div class="playing-card card-back">BlackGasp</div>`;
+ return `<div class="playing-card">${c.v}${c.s}</div>`;
+}
+
 function render(hideDealer=true){
  document.getElementById("playerCards").innerHTML=player.map(c=>cardHTML(c)).join("");
  document.getElementById("dealerCards").innerHTML=dealer.map((c,i)=>cardHTML(c,hideDealer&&i===1&&playing)).join("");
@@ -169,61 +219,96 @@ function render(hideDealer=true){
  document.getElementById("dealerScore").innerText=hideDealer&&playing?value([dealer[0]]):value(dealer);
  document.getElementById("hitBtn").disabled=!playing;
  document.getElementById("standBtn").disabled=!playing;
- document.getElementById("doubleBtn").disabled=!playing||!canDouble||balance<currentBet;
- document.getElementById("splitBtn").disabled=!playing||!canSplit||balance<currentBet;
- saveBalance();
+ document.getElementById("doubleBtn").disabled=!playing||!canDouble||bj.balance<currentBet;
+ saveBJ();
 }
+
 function startBlackjack(){
  currentBet=Number(document.getElementById("bjBet").value);
  if(!currentBet||currentBet<=0){alert("Mets une mise");return}
- if(currentBet>balance){alert("Pas assez de balance");return}
- balance-=currentBet;newDeck();player=[];dealer=[];playing=true;canDouble=true;
- document.getElementById("bjMessage").innerText="Distribution des cartes...";
- setTimeout(()=>{player.push(deck.pop());render(true)},250);
- setTimeout(()=>{dealer.push(deck.pop());render(true)},550);
- setTimeout(()=>{player.push(deck.pop());render(true)},850);
- setTimeout(()=>{
-  dealer.push(deck.pop());
-  canSplit=player[0].v===player[1].v;
-  document.getElementById("bjMessage").innerText="À toi de jouer";
-  render(true);
-  if(value(player)===21)stand();
- },1150);
-}
-function hit(){if(!playing)return;canDouble=false;canSplit=false;player.push(deck.pop());render(true);if(value(player)>21){playing=false;document.getElementById("bjMessage").innerText="Perdu 💀";render(false)}}
-function stand(){
- if(!playing)return;canDouble=false;canSplit=false;
- let interval=setInterval(()=>{
-  if(value(dealer)<17){dealer.push(deck.pop());render(false)}
-  else{clearInterval(interval);finishRound()}
- },450);
-}
-function finishRound(){
- let ps=value(player),ds=value(dealer);playing=false;
- if(ps>21){document.getElementById("bjMessage").innerText="Perdu 💀"}
- else if(ds>21||ps>ds){balance+=currentBet*2;document.getElementById("bjMessage").innerText="Gagné 🔥"}
- else if(ps===ds){balance+=currentBet;document.getElementById("bjMessage").innerText="Égalité 🤝"}
- else{document.getElementById("bjMessage").innerText="Perdu 💀"}
- render(false);
-}
-function doubleDown(){
- if(!playing||!canDouble||balance<currentBet)return;
- balance-=currentBet;currentBet*=2;canDouble=false;canSplit=false;
- player.push(deck.pop());render(true);
- if(value(player)>21){playing=false;document.getElementById("bjMessage").innerText="Perdu après double 💀";render(false)}
- else stand();
-}
-function splitHand(){
- if(!playing||!canSplit||balance<currentBet)return;
- balance-=currentBet;
- let old=player[1];
- player=[player[0],deck.pop()];
- document.getElementById("bjMessage").innerText="Split simplifié : je garde la première main active ✂️";
- canSplit=false;canDouble=false;
+ if(currentBet>bj.balance){alert("Pas assez de balance");return}
+ bj.balance-=currentBet;
+ newDeck();
+ player=[deck.pop(),deck.pop()];
+ dealer=[deck.pop(),deck.pop()];
+ playing=true;canDouble=true;
+ document.getElementById("bjMessage").innerText="À toi de jouer";
  render(true);
+ if(isBJ(player)){
+  playing=false;
+  bj.balance+=currentBet*2.5;
+  bj.wins++;
+  document.getElementById("bjMessage").innerText="BLACKJACK BLACKGASP 🔥 +x2.5";
+  render(false);
+ }
 }
 
-afficher();saveBalance();render(false);
+function hit(){
+ if(!playing)return;
+ canDouble=false;
+ player.push(deck.pop());
+ if(value(player)>21){
+  playing=false;
+  bj.losses++;
+  document.getElementById("bjMessage").innerText="Perdu 💀";
+  render(false);
+ }else render(true);
+}
+
+function stand(){
+ if(!playing)return;
+ canDouble=false;
+ while(value(dealer)<17){dealer.push(deck.pop())}
+ finishRound();
+}
+
+function finishRound(){
+ let ps=value(player),ds=value(dealer);
+ playing=false;
+ if(ps>21){
+  bj.losses++;
+  document.getElementById("bjMessage").innerText="Perdu 💀";
+ }else if(ds>21||ps>ds){
+  bj.balance+=currentBet*2;
+  bj.wins++;
+  document.getElementById("bjMessage").innerText="Gagné 🔥";
+ }else if(ps===ds){
+  bj.balance+=currentBet;
+  bj.pushes++;
+  document.getElementById("bjMessage").innerText="Égalité 🤝";
+ }else{
+  bj.losses++;
+  document.getElementById("bjMessage").innerText="Perdu 💀";
+ }
+ render(false);
+}
+
+function doubleDown(){
+ if(!playing||!canDouble||bj.balance<currentBet)return;
+ bj.balance-=currentBet;
+ currentBet*=2;
+ canDouble=false;
+ player.push(deck.pop());
+ if(value(player)>21){
+  playing=false;
+  bj.losses++;
+  document.getElementById("bjMessage").innerText="Perdu après double 💀";
+  render(false);
+ }else stand();
+}
+
+function resetBJ(){
+ if(confirm("Reset la balance Blackjack ?")){
+  bj={balance:5000,start:5000,wins:0,losses:0,pushes:0};
+  player=[];dealer=[];playing=false;
+  document.getElementById("bjMessage").innerText="Mise et lance une partie";
+  render(false);
+ }
+}
+
+afficher();
+saveBJ();
+render(false);
 </script>
 </body>
 </html>
