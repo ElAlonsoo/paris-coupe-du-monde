@@ -7,11 +7,20 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#020b1f,#061a40,#0b2a66);color:white}
-header{text-align:center;padding:30px 15px;background:radial-gradient(circle at top,#ffd70055,transparent 45%),linear-gradient(90deg,#001f54,#003b8f);border-bottom:4px solid #ffd700}
-h1{color:#ffd700;margin:10px 0;font-size:38px;text-shadow:0 0 20px #ffd700}
+header{
+  text-align:center;
+  padding:55px 15px;
+  background:
+  linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.75)),
+  url('IMG_4882.webp');
+  background-size:cover;
+  background-position:center;
+  border-bottom:4px solid #00ff66;
+}
+h1{color:#00ff66;margin:10px 0;font-size:42px;text-shadow:0 0 12px #00ff66,0 0 25px #00ff66}
 .container{max-width:1150px;margin:auto;padding:18px}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
-.card,.box{background:rgba(255,255,255,.09);border:1px solid rgba(255,215,0,.45);border-radius:18px;padding:16px;text-align:center}
+.card,.box{background:rgba(255,255,255,.09);border:1px solid rgba(0,255,102,.45);border-radius:18px;padding:16px;text-align:center}
 .card b{display:block;color:#ffd700;font-size:24px;margin-top:6px}
 .good{color:#23e36f!important}.bad{color:#ff4d4d!important}
 input,select,button{width:100%;padding:13px;margin:6px 0;border:none;border-radius:12px;font-size:16px}
@@ -36,7 +45,7 @@ td{padding:11px;text-align:center;border-bottom:1px solid #ddd}
 
 <body>
 <header>
-  <div style="font-size:55px">🏆 ⚽ 🇫🇷 🐐 🃏</div>
+  <div style="font-size:55px">👁️ 💸 🏆 ⚽ 🐐 🃏</div>
   <h1>PARIS DE GASPARD LE GOAT</h1>
   <p>Pronogasp + BlackGasp virtuel</p>
 </header>
@@ -105,9 +114,10 @@ td{padding:11px;text-align:center;border-bottom:1px solid #ddd}
   <button id="hitBtn" onclick="hit()">➕ Tirer</button>
   <button id="standBtn" onclick="stand()">✋ Rester</button>
   <button id="doubleBtn" onclick="doubleDown()">💥 Double</button>
+  <button id="splitBtn" onclick="splitHand()">✂️ Diviser</button>
 
   <h2 id="bjMessage">Mise et lance une partie</h2>
-  <p>Argent 100% virtuel. Blackjack naturel payé x2.5 pour rendre le mode plus fun.</p>
+  <p>Argent 100% virtuel. Blackjack naturel payé x2.5.</p>
   <button onclick="resetBJ()">🔄 Reset Blackjack</button>
 </div>
 
@@ -169,7 +179,7 @@ function afficher(){
 }
 
 let bj=JSON.parse(localStorage.getItem("blackgasp"))||{balance:5000,start:5000,wins:0,losses:0,pushes:0};
-let deck=[],player=[],dealer=[],currentBet=0,playing=false,canDouble=false;
+let deck=[],player=[],dealer=[],currentBet=0,playing=false,canDouble=false,canSplit=false,splitMode=false,splitHands=[],activeHand=0,splitBets=[];
 
 function saveBJ(){
  localStorage.setItem("blackgasp",JSON.stringify(bj));
@@ -206,20 +216,18 @@ function value(hand){
 }
 
 function isBJ(hand){return hand.length===2&&value(hand)===21}
-
-function cardHTML(c,hide=false){
- if(hide)return `<div class="playing-card card-back">BlackGasp</div>`;
- return `<div class="playing-card">${c.v}${c.s}</div>`;
-}
+function cardHTML(c,hide=false){return hide?`<div class="playing-card card-back">BlackGasp</div>`:`<div class="playing-card">${c.v}${c.s}</div>`}
 
 function render(hideDealer=true){
- document.getElementById("playerCards").innerHTML=player.map(c=>cardHTML(c)).join("");
+ let handToShow=splitMode?splitHands[activeHand]:player;
+ document.getElementById("playerCards").innerHTML=handToShow.map(c=>cardHTML(c)).join("");
  document.getElementById("dealerCards").innerHTML=dealer.map((c,i)=>cardHTML(c,hideDealer&&i===1&&playing)).join("");
- document.getElementById("playerScore").innerText=value(player);
+ document.getElementById("playerScore").innerText=value(handToShow);
  document.getElementById("dealerScore").innerText=hideDealer&&playing?value([dealer[0]]):value(dealer);
  document.getElementById("hitBtn").disabled=!playing;
  document.getElementById("standBtn").disabled=!playing;
  document.getElementById("doubleBtn").disabled=!playing||!canDouble||bj.balance<currentBet;
+ document.getElementById("splitBtn").disabled=!playing||!canSplit||bj.balance<currentBet;
  saveBJ();
 }
 
@@ -231,7 +239,8 @@ function startBlackjack(){
  newDeck();
  player=[deck.pop(),deck.pop()];
  dealer=[deck.pop(),deck.pop()];
- playing=true;canDouble=true;
+ playing=true;canDouble=true;splitMode=false;splitHands=[];activeHand=0;splitBets=[];
+ canSplit=player[0].v===player[1].v && bj.balance>=currentBet;
  document.getElementById("bjMessage").innerText="À toi de jouer";
  render(true);
  if(isBJ(player)){
@@ -245,41 +254,54 @@ function startBlackjack(){
 
 function hit(){
  if(!playing)return;
- canDouble=false;
- player.push(deck.pop());
- if(value(player)>21){
-  playing=false;
-  bj.losses++;
-  document.getElementById("bjMessage").innerText="Perdu 💀";
-  render(false);
+ canDouble=false;canSplit=false;
+ let hand=splitMode?splitHands[activeHand]:player;
+ hand.push(deck.pop());
+ if(value(hand)>21){
+  if(splitMode && activeHand===0){
+   activeHand=1;
+   canDouble=false;
+   document.getElementById("bjMessage").innerText="Main 1 perdue, main 2 à toi";
+   render(true);
+  }else{
+   stand();
+  }
  }else render(true);
 }
 
 function stand(){
  if(!playing)return;
- canDouble=false;
+ canDouble=false;canSplit=false;
+ if(splitMode && activeHand===0){
+  activeHand=1;
+  document.getElementById("bjMessage").innerText="Main 2 à toi";
+  render(true);
+  return;
+ }
  while(value(dealer)<17){dealer.push(deck.pop())}
  finishRound();
 }
 
 function finishRound(){
- let ps=value(player),ds=value(dealer);
  playing=false;
- if(ps>21){
-  bj.losses++;
-  document.getElementById("bjMessage").innerText="Perdu 💀";
- }else if(ds>21||ps>ds){
-  bj.balance+=currentBet*2;
-  bj.wins++;
-  document.getElementById("bjMessage").innerText="Gagné 🔥";
- }else if(ps===ds){
-  bj.balance+=currentBet;
-  bj.pushes++;
-  document.getElementById("bjMessage").innerText="Égalité 🤝";
- }else{
-  bj.losses++;
-  document.getElementById("bjMessage").innerText="Perdu 💀";
+ if(splitMode){
+  for(let i=0;i<2;i++){
+   let ps=value(splitHands[i]),ds=value(dealer),bet=splitBets[i];
+   if(ps>21){bj.losses++}
+   else if(ds>21||ps>ds){bj.balance+=bet*2;bj.wins++}
+   else if(ps===ds){bj.balance+=bet;bj.pushes++}
+   else{bj.losses++}
+  }
+  document.getElementById("bjMessage").innerText="Split terminé ✂️";
+  render(false);
+  return;
  }
+
+ let ps=value(player),ds=value(dealer);
+ if(ps>21){bj.losses++;document.getElementById("bjMessage").innerText="Perdu 💀"}
+ else if(ds>21||ps>ds){bj.balance+=currentBet*2;bj.wins++;document.getElementById("bjMessage").innerText="Gagné 🔥"}
+ else if(ps===ds){bj.balance+=currentBet;bj.pushes++;document.getElementById("bjMessage").innerText="Égalité 🤝"}
+ else{bj.losses++;document.getElementById("bjMessage").innerText="Perdu 💀"}
  render(false);
 }
 
@@ -287,20 +309,35 @@ function doubleDown(){
  if(!playing||!canDouble||bj.balance<currentBet)return;
  bj.balance-=currentBet;
  currentBet*=2;
- canDouble=false;
- player.push(deck.pop());
- if(value(player)>21){
-  playing=false;
-  bj.losses++;
-  document.getElementById("bjMessage").innerText="Perdu après double 💀";
-  render(false);
+ canDouble=false;canSplit=false;
+ let hand=splitMode?splitHands[activeHand]:player;
+ hand.push(deck.pop());
+ if(value(hand)>21){
+  if(splitMode && activeHand===0){activeHand=1;render(true)}
+  else finishRound();
  }else stand();
+}
+
+function splitHand(){
+ if(!playing||!canSplit||bj.balance<currentBet)return;
+ bj.balance-=currentBet;
+ splitMode=true;
+ splitHands=[
+  [player[0],deck.pop()],
+  [player[1],deck.pop()]
+ ];
+ splitBets=[currentBet,currentBet];
+ activeHand=0;
+ canSplit=false;
+ canDouble=false;
+ document.getElementById("bjMessage").innerText="Split activé ✂️ Main 1";
+ render(true);
 }
 
 function resetBJ(){
  if(confirm("Reset la balance Blackjack ?")){
   bj={balance:5000,start:5000,wins:0,losses:0,pushes:0};
-  player=[];dealer=[];playing=false;
+  player=[];dealer=[];playing=false;splitMode=false;
   document.getElementById("bjMessage").innerText="Mise et lance une partie";
   render(false);
  }
